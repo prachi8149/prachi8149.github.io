@@ -1,0 +1,279 @@
+---
+title: "Fitbit"
+author: "Prachi"
+date: '2022-04-27'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction and background
+Analysis of women using fibit in their daily life.It collects health data related to their activity, sleep, stress,menstrual cycle, and mindfulness habits. All the women don't use fitbits, so we need to analyse the data such that we can recommend some marketing strategy so that women will start using it as well as it will be helpful for the growth of Bellabeat.
+
+
+### Upload your CSV files to R
+We uploaded the CSV filest from the relevant data source:
+[click here](https://www.kaggle.com/arashnic/fitbit)
+
+
+### Installing and loading common packages and libraries
+
+```{r}
+
+library(tidyverse)
+library(ggplot2)
+```
+
+## Loading CSV files
+We'll load all the CSV files that are downloaded from kaggle and give a differnet name for each of the CSV so that they are readable.
+
+
+```{r Load CSV}
+daily_activity <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\dailyActivity_merged.csv")
+daily_calories <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\dailyCalories_merged.csv")
+daily_intensities <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\dailyIntensities_merged.csv")
+daily_steps <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\dailySteps_merged.csv")
+heartrate_seconds <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\heartrate_seconds_merged.csv")
+hourly_intensities <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\hourlyIntensities_merged.csv")
+hourly_steps <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\hourlySteps_merged.csv")
+minute_calories_narrow <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\minuteCaloriesNarrow_merged.csv")
+minute_calories_wide <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\minuteCaloriesWide_merged.csv")
+minute_intensities_narrow <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\minuteIntensitiesNarrow_merged.csv")
+minute_intensities_wide <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\minuteIntensitiesWide_merged.csv")
+minute_METs_narrow <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\minuteMETsNarrow_merged.csv")
+minute_sleep <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\minuteSleep_merged.csv")
+minute_steps_narrow <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\minuteStepsNarrow_merged.csv")
+minute_steps_wide <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\minuteStepsWide_merged.csv")
+sleep_day <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\sleepDay_merged.csv")
+weightlog_info <- read_csv("C:\\Users\\Prachi\\Documents\\MyProject\\Fitabase_Data\\weightLogInfo_merged.csv")
+```
+
+
+## Exploring a few key tables
+Take a look at the daily_activity data and daily_calories data
+```{r}
+head(daily_activity)
+head(daily_calories)
+
+```
+
+
+Take a look at the daily_steps data and identify the columns present in it.
+```{r}
+head(daily_steps)
+colnames(daily_steps)
+```
+
+
+Take a look at the heartrate_seconds data
+```{r}
+head(heartrate_seconds)
+
+```
+
+
+In 'heartrate_seconds' data, the date and time is present together in one column, we need to separate it
+```{r Chunk 7, warning=FALSE}
+heartrate_seconds_new <- separate(data=heartrate_seconds,"Time",into=c("date","time"),sep = ' ')
+head(heartrate_seconds_new)
+```
+
+
+Identify the structure of sleep_day data
+```{r}
+str(sleep_day)
+
+```
+
+
+Similarly, separate the date and time columns for sleepy_day
+```{r Chunk 9, warning=FALSE}
+sleep_day_new <- sleep_day %>% 
+  separate("SleepDay",into=c("date","time"),sep=' ')
+head(sleep_day_new)
+```
+
+
+## Peforming some statistics using sql
+
+#### Queries on daily_data
+
+*  SELECT *
+FROM
+ `myfirstproject-347205.Fitbit.daily_activity`
+
+
+* ALTER TABLE `myfirstproject-347205.Fitbit.daily_activity` drop column LoggedActivitiesDistance 
+
+
+*  SELECT 
+ COUNT(DISTINCT Id) as number_of_people
+FROM
+ `myfirstproject-347205.Fitbit.daily_activity`
+
+
+
+
+#### Queries on 'daily_calories' data
+
+*  SELECT *
+FROM
+ `myfirstproject-347205.Fitbit.daily_calories`
+WHERE
+ calories=0
+
+
+*  SELECT
+ DISTINCT Id,
+FROM
+ `myfirstproject-347205.Fitbit.daily_calories`
+
+
+*  SELECT
+ COUNT(DISTINCT Id) as number_of_people
+FROM
+ `myfirstproject-347205.Fitbit.daily_calories`
+
+
+
+
+#### Queries on 'daily_steps' data
+
+*  SELECT *
+FROM
+ `myfirstproject-347205.Fitbit.daily_steps`
+WHERE
+ StepTotal=0 
+
+
+*  DELETE 
+FROM
+ `myfirstproject-347205.Fitbit.daily_steps`
+WHERE
+ StepTotal=0 
+
+
+
+
+#### Merging two tables using "JOIN" on 'id' attribute
+
+*  SELECT
+ DISTINCT(calories.Id), calories.ActivityDay,calories.Calories,
+ steps.StepTotal
+FROM
+ `myfirstproject-347205.Fitbit.daily_calories` as calories
+INNER JOIN 
+ `myfirstproject-347205.Fitbit.daily_steps` as steps
+ON calories.Id=steps.Id and calories.ActivityDay=steps.ActivityDay
+
+
+
+
+#### Find total calories and total steps for individual id
+
+*  SELECT
+ DISTINCT(calories.Id), 
+ SUM(calories.Calories) as total_calories,
+ SUM(steps.StepTotal) as total_steps
+FROM
+ `myfirstproject-347205.Fitbit.daily_calories` as calories
+INNER JOIN 
+ `myfirstproject-347205.Fitbit.daily_steps` as steps
+ON calories.Id=steps.Id 
+GROUP BY ID
+
+
+
+
+#### Find the highest number of steps
+SELECT max(total_steps) as highest_steps
+FROM
+(SELECT
+ DISTINCT(calories.Id) as Idenity_number, 
+ SUM(calories.Calories) as total_calories,
+ SUM(steps.StepTotal) as total_steps
+FROM
+ `myfirstproject-347205.Fitbit.daily_calories` as calories
+INNER JOIN 
+ `myfirstproject-347205.Fitbit.daily_steps` as steps
+ON calories.Id=steps.Id 
+GROUP BY calories.Id 
+ORDER BY total_steps DESC)
+as Daily_calories_steps
+
+
+
+
+## Queries using R
+
+Filter sleep_day_new for TotalTimeInBed is greater than 900
+```{r}
+Filtered_sleep_day <- sleep_day_new %>% 
+  filter(TotalTimeInBed>900) 
+view(Filtered_sleep_day)
+```
+
+
+Finding minimum and maximum steps from 'daily_steps' data
+```{r}
+daily_steps %>% 
+ summarise(max_steps = max(StepTotal))
+
+daily_steps %>% 
+ summarise(min_steps = min(StepTotal))
+```
+
+
+Distinct participants in each dataframe
+```{r}
+n_distinct(daily_activity$Id)
+n_distinct(daily_steps$Id)
+```
+
+
+Summary statistics on 'daily_activity'
+```{r}
+daily_activity %>% 
+  select(Id, ActivityDate, Calories) 
+```
+
+
+## Merging these two datasets together
+```{r}
+Merged_data <-merge(daily_calories, daily_steps, by='Id')
+View(Merged_data)
+```
+
+
+## Plotting a few explorations
+
+* Relationship between steps taken in a day and sedentary minutes
+```{r}
+# relationship between steps taken in a day and sedentary minutes
+ggplot(data = daily_activity)+
+  geom_point(mapping = aes(x=TotalSteps, y=SedentaryMinutes,color=Calories))+
+  labs(title="TotalSteps VS SedentaryMinutes",subtitle = "Relationsip between steps taken in a day and sedentary minutes")+
+  annotate("text",25000,500,label="Less calories", angle=25)
+
+```
+
+From the above graph,we can see that the people who took more total steps tend to burn more calories
+
+
+
+Relationship between amount of time slept and the total time someone spends in bed
+```{r}
+
+# relationship between amount of time slept and the total time someone spends in bed.
+ggplot(data = sleep_day)+
+  geom_point(mapping = aes(x=TotalMinutesAsleep, y=TotalTimeInBed))+
+  labs(title="TotalMinutesAsleep VS TotalTimeInBed",subtitle = "Relationsip between amount of time slept and the total time spent in bed ")
+```
+
+From the above graph,we can see that there are some data points that spent a lot of time in bed, but are not sleeping.
+
+
